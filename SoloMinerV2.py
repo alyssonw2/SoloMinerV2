@@ -7,6 +7,7 @@ import socket
 import threading
 import time
 import traceback
+import concurrent.futures
 from datetime import datetime
 from signal import SIGINT , signal
 
@@ -24,15 +25,15 @@ def timer() :
 
 # Changed this Address And Insert Your BTC Wallet
 
-address = '16p9y6EstGYcnofGNvUJMEGKiAWhAr1uR8' 
+address = 'bc1qq26t5362u676gf9t2c75jkaulvksva347l8upj' 
 
-print(Back.BLUE , Fore.WHITE , 'BTC WALLET:' , Fore.BLACK , str(address) , Style.RESET_ALL)
+#print(Back.BLUE , Fore.WHITE , 'BTC WALLET:' , Fore.BLACK , str(address) , Style.RESET_ALL)
 
 
 def handler(signal_received , frame) :
     # Handle any cleanup here
     ctx.fShutdown = True
-    print(Fore.MAGENTA , '[' , timer() , ']' , Fore.YELLOW , 'Terminating Miner, Please Wait..')
+    #print(Fore.MAGENTA , '[' , timer() , ']' , Fore.YELLOW , 'Terminating Miner, Please Wait..')
 
 
 def logg(msg) :
@@ -78,9 +79,9 @@ class ExitedThread(threading.Thread) :
                 self.thread_handler2(arg)
             except Exception as e :
                 logg("ThreadHandler()")
-                print(Fore.MAGENTA , '[' , timer() , ']' , Fore.WHITE , 'ThreadHandler()')
+                #print(Fore.MAGENTA , '[' , timer() , ']' , Fore.WHITE , 'ThreadHandler()')
                 logg(e)
-                print(Fore.RED , e)
+                #print(Fore.RED , e)
             ctx.listfThreadRunning[n] = False
 
             time.sleep(2)
@@ -103,7 +104,7 @@ def bitcoin_miner(t , restarted = False) :
         logg('\n[*] Bitcoin Miner restarted')
         print(Fore.MAGENTA , '[' , timer() , ']' , Fore.YELLOW , 'Programmer = Mmdrza.Com')
         print(Fore.MAGENTA , '[' , timer() , ']' , Fore.BLUE , '[*] Bitcoin Miner Restarted')
-        time.sleep(5)
+        time.sleep(2)
 
     target = (ctx.nbits[2 :] + '00' * (int(ctx.nbits[:2] , 16) - 3)).zfill(64)
     extranonce2 = hex(random.randint(0 , 2 ** 32 - 1))[2 :].zfill(2 * ctx.extranonce2_size)  # create random
@@ -152,13 +153,14 @@ def bitcoin_miner(t , restarted = False) :
             continue
 
         nonce = hex(random.randint(0 , 2 ** 32 - 1))[2 :].zfill(8)  # nNonce   #hex(int(nonce,16)+1)[2:]
+
         blockheader = ctx.version + ctx.prevhash + merkle_root + ctx.ntime + ctx.nbits + nonce + \
                       '000000800000000000000000000000000000000000000000000000000000000000000000000000000000000080020000'
         hash = hashlib.sha256(hashlib.sha256(binascii.unhexlify(blockheader)).digest()).digest()
         hash = binascii.hexlify(hash).decode()
 
         # Logg all hashes that start with 7 zeros or more
-        if hash.startswith('0000000') :
+        if hash.startswith('0000000000000000000') :
             logg('[*] New hash: {} for block {}'.format(hash , work_on + 1))
             print(Fore.MAGENTA , '[' , timer() , ']' , Fore.YELLOW , '[*] New hash:' , Fore.WHITE , ' {} for block' ,
                   Fore.WHITE ,
@@ -180,7 +182,6 @@ def bitcoin_miner(t , restarted = False) :
             print(Fore.YELLOW)
             print(Fore.MAGENTA , '[' , timer() , ']' , Fore.YELLOW , '[*] Block hash: {}'.format(hash))
             logg('[*] Blockheader: {}'.format(blockheader))
-
             print(Fore.YELLOW , '[*] Blockheader: {}'.format(blockheader))
             payload = bytes('{"params": ["' + address + '", "' + ctx.job_id + '", "' + ctx.extranonce2 \
                             + '", "' + ctx.ntime + '", "' + nonce + '"], "id": 1, "method": "mining.submit"}\n' ,
@@ -254,7 +255,6 @@ class CoinMinerThread(ExitedThread) :
             logg(e)
             traceback.print_exc()
         ctx.listfThreadRunning[self.n] = False
-
     pass
 
 
